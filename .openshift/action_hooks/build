@@ -5,3 +5,29 @@
 # could be python, php, ruby, etc.
 
 set -e
+
+## Variable Definitions. ##
+
+# Public directory for the repository.
+PUBLIC_DIR=${OPENSHIFT_REPO_DIR}/public
+# Current directory.
+THIS_DIR=${OPENSHIFT_REPO_DIR}/.openshift/action_hooks
+# Composer directory.
+COMPOSER_DIR=${OPENSHIFT_PHP_DIR}/composer
+
+
+# Build PHP extra's
+# Update conf/ini filesand install pecl extensions
+${OPENSHIFT_PHP_DIR}/bin/control build
+
+# Composer is already installed as per
+# https://github.com/boekkooi/openshift-cartridge-php#composerpear
+# So install Drush support to the application if not installed.
+if [ ! -d "{$COMPOSER_DIR}/.composer/vendor/drush" ]; then
+  # Install Drush.
+  composer global require drush/drush
+  #Add Drush to base_profile.
+  echo "PATH=\${COMPOSER_DIR}/.composer/vendor/bin:\$PATH" >> ${OPENSHIFT_DATA_DIR}/.bash_profile
+  # Source the bash_profile
+  echo "source ${OPENSHIFT_DATA_DIR}/.bash_profile"
+fi
