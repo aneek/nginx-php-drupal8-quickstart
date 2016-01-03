@@ -27,7 +27,7 @@ if [ ! -d "{$COMPOSER_DIR}/.composer/vendor/drush" ]; then
   # Install Drush.
   composer global require drush/drush
   #Add Drush to base_profile.
-  echo "PATH=\${COMPOSER_DIR}/.composer/vendor/bin:\$PATH" >> ${OPENSHIFT_DATA_DIR}/.bash_profile
+  echo "PATH=\$${OPENSHIFT_PHP_DIR}/composer/.composer/vendor/bin:\$PATH" >> ${OPENSHIFT_DATA_DIR}/.bash_profile
   # Source the bash_profile
   echo "source ${OPENSHIFT_DATA_DIR}/.bash_profile"
 fi
