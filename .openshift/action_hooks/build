@@ -40,6 +40,7 @@ if [ ! -d "$DRUSH_DIR" ]; then
     echo "PATH=${OPENSHIFT_PHP_DIR}/composer/.composer/vendor/bin:\$PATH" >> ${OPENSHIFT_DATA_DIR}/.bash_profile
     echo ""
     echo "source ${OPENSHIFT_DATA_DIR}/.bash_profile"
+
     echo ""
   fi
 fi
