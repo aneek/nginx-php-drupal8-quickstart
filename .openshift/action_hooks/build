@@ -19,7 +19,7 @@ DRUSH_DIR=${OPENSHIFT_PHP_DIR}/composer/.composer/vendor/drush
 # Bash profile file.
 PROFILE_FILE=${OPENSHIFT_DATA_DIR}/.bash_profile
 # Composer bin directory path.
-COMPOSER_BIN=${OPENSHIFT_PHP_DIR}/composer/.composer/vendor/bin
+export COMPOSER_BIN=${OPENSHIFT_PHP_DIR}/composer/.composer/vendor/bin
 # Current downloads directory.
 CURRENT_DOWNLOAD=${OPENSHIFT_DATA_DIR}downloads/current
 
@@ -53,7 +53,7 @@ if [ ! -d "${CURRENT_DOWNLOAD}" ]; then
   echo
 
   mkdir -p ${OPENSHIFT_DATA_DIR}downloads
-  if ! drush dl drupal-8 --destination=${OPENSHIFT_DATA_DIR}downloads --yes
+  if ! ${COMPOSER_BIN}/drush dl drupal-8 --destination=${OPENSHIFT_DATA_DIR}downloads --yes
   then
     echo "ERROR: Unable download and install Drupal."
     exit 7
