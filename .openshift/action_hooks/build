@@ -18,8 +18,10 @@ COMPOSER_DIR=${OPENSHIFT_PHP_DIR}/composer
 DRUSH_DIR=${OPENSHIFT_PHP_DIR}/composer/.composer/vendor/drush
 # Bash profile file.
 PROFILE_FILE=${OPENSHIFT_DATA_DIR}/.bash_profile
-
-
+# Composer bin directory path.
+COMPOSER_BIN=${OPENSHIFT_PHP_DIR}/composer/.composer/vendor/bin
+# Current downloads directory.
+CURRENT_DOWNLOAD=${OPENSHIFT_DATA_DIR}downloads/current
 
 # Build PHP extra's
 # Update conf/ini filesand install pecl extensions
@@ -32,14 +34,29 @@ if [ ! -d "$DRUSH_DIR" ]; then
   # Install Drush.
   echo "Installing composer"
   composer global require drush/drush
-  echo ""
+  echo
 
   #Add Drush to base_profile only if it's not previously added.
   if ! grep -q '/.composer/vendor/bin' "${PROFILE_FILE}" ; then
     echo "Editing ${PROFILE_FILE} to load Drush"
     echo "PATH=${OPENSHIFT_PHP_DIR}/composer/.composer/vendor/bin:\$PATH" >> ${OPENSHIFT_DATA_DIR}/.bash_profile
-    echo ""
+    echo
     echo "source ${OPENSHIFT_DATA_DIR}/.bash_profile"
-    echo ""
+    echo
   fi
+fi
+
+# Download and install Drupal latest version if needed.
+if [ ! -d "${CURRENT_DOWNLOAD}" ]; then
+  mkdir -p ${OPENSHIFT_TMP_DIR}drupal
+  echo "Download the latest version of Drupal 8"
+  echo
+
+  mkdir -p ${OPENSHIFT_DATA_DIR}downloads
+  if ! drush dl drupal-8 --destination=${OPENSHIFT_DATA_DIR}downloads --yes
+  then
+    echo "ERROR: Unable download and install Drupal."
+    exit 7
+  fi
+else
 fi
