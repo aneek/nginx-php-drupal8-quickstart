@@ -75,5 +75,9 @@ echo
 # to a valid Drupal instance directory
 #
 
+# Remove index.html from Repository.
+rm -rf ${OPENSHIFT_REPO_DIR}public
+
+ln -s $DRUPAL_INSTALL_DIR ${OPENSHIFT_REPO_DIR}public
 
 echo "done"
