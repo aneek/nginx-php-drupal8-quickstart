@@ -59,11 +59,22 @@ if [ ! -d "${CURRENT_DOWNLOAD}" ]; then
     exit 7
   fi
 
-  # Link the current downloaded version with the Repository.
+  # Rename the latest package as "current".
   LATEST=$(ls -1t ${OPENSHIFT_DATA_DIR}downloads | head -1)
   export DRUPAL_INSTALL_DIR="${OPENSHIFT_DATA_DIR}downloads/${LATEST}"
   ln -s ${LATEST} ${OPENSHIFT_DATA_DIR}downloads/current
-  
+
 else
-  echo "Do nothing"
+  DRUPAL_INSTALL_DIR=$(readlink -f ${OPENSHIFT_DATA_DIR}downloads/current)
+  echo "Drupal is already installed at $DRUPAL_INSTALL_DIR"
 fi
+
+echo
+
+#
+# Ensure that the app-root/runtime/repo/php PHP directory points
+# to a valid Drupal instance directory
+#
+ln -sfn ${DRUPAL_INSTALL_DIR} ${OPENSHIFT_REPO_DIR}public
+
+echo "done"
