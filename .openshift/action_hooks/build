@@ -58,6 +58,12 @@ if [ ! -d "${CURRENT_DOWNLOAD}" ]; then
     echo "ERROR: Unable download and install Drupal."
     exit 7
   fi
+
+  # Link the current downloaded version with the Repository.
+  LATEST=$(ls -1t ${OPENSHIFT_DATA_DIR}downloads | head -1)
+  export DRUPAL_INSTALL_DIR="${OPENSHIFT_DATA_DIR}downloads/${LATEST}"
+  ln -s ${LATEST} ${OPENSHIFT_DATA_DIR}downloads/current
+  
 else
   echo "Do nothing"
 fi
