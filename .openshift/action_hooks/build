@@ -59,8 +59,9 @@ if [ ! -d "${CURRENT_DOWNLOAD}" ]; then
     exit 7
   fi
 
-  # Rename the latest package as "current".
-
+  # Link the latest package to "current".
+  export DRUPAL_INSTALL_DIR="${OPENSHIFT_DATA_DIR}downloads/`ls -1rt ${OPENSHIFT_DATA_DIR}downloads | head -1`"
+  ln -s ${DRUPAL_INSTALL_DIR} ${OPENSHIFT_DATA_DIR}downloads/current
 
 else
   DRUPAL_INSTALL_DIR=$(readlink -f ${OPENSHIFT_DATA_DIR}downloads/current)

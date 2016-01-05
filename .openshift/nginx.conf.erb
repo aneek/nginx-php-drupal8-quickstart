@@ -30,7 +30,81 @@ server {
     listen  <%= ENV['OPENSHIFT_NGINX_IP'] %>:<%= ENV['OPENSHIFT_NGINX_PORT'] %>;
     root    <%= ENV['OPENSHIFT_REPO_DIR'] %>/public;
 
+    # Script Index.
+    index index.php index.html index.htm;
+    charset utf-8;
+
+    # Stop the access log.
+    access_log off;
+
+    fastcgi_param SCRIPT_NAME $fastcgi_script_name;
+
     location / {
-        index  index.html index.htm;
+        try_files $uri @rewrite;
+    }
+
+    location = /favicon.ico {
+        log_not_found off;
+        access_log off;
+    }
+
+    location = /robots.txt {
+        allow all;
+        log_not_found off;
+        access_log off;
+    }
+
+    location ~ \..*/.*\.php$ {
+        return 403;
+    }
+
+    # Block access to Private files.
+    location ~ ^/sites/.*/private/ {
+        access_log off;
+        deny all;
+    }
+
+    # Block access to "hidden" files and directories whose names begin with a
+    # period. This includes directories used by version control systems such
+    # as Subversion or Git to store control files.
+    location ~ (^|/)\. {
+        return 403;
+    }
+
+    # Very rarely should these ever be accessed outside of your lan
+    location ~* \.(txt|log)$ {
+        allow <%= ENV['OPENSHIFT_NGINX_IP'] %>;
+        deny all;
+    }
+
+    location @rewrite {
+        rewrite ^ /index.php;
+    }
+
+    location ~ ^/(index|update)\.php(/|$) {
+        fastcgi_split_path_info ^(.+?\.php)(|/.*)$;
+        fastcgi_pass unix:<%= ENV['OPENSHIFT_PHP_SOCKET'] %>;
+        fastcgi_index index.php;
+        fastcgi_param  SCRIPT_FILENAME  $realpath_root$fastcgi_script_name;
+        fastcgi_param DOCUMENT_ROOT $realpath_root;
+        fastcgi_intercept_errors on;
+        fastcgi_read_timeout 600;
+        fastcgi_param PATH_INFO $fastcgi_script_name;
+        include <%= ENV['OPENSHIFT_NGINX_DIR'] %>/usr/nginx-<%= ENV['OPENSHIFT_NGINX_VERSION'] %>/conf/fastcgi_params;
+    }
+
+    #Image Cache.
+    location ~ ^/sites/.*/files/imagecache/ {
+      try_files $uri @rewrite;
+    }
+
+    # Image Styles.
+    location ~ ^/sites/.*/files/styles/ {
+      try_files $uri @rewrite;
+    }
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+      expires max;
+      log_not_found off;
     }
 }
