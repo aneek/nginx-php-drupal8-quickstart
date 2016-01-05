@@ -60,9 +60,7 @@ if [ ! -d "${CURRENT_DOWNLOAD}" ]; then
   fi
 
   # Rename the latest package as "current".
-  LATEST=$(ls -1t ${OPENSHIFT_DATA_DIR}downloads | head -1)
-  export DRUPAL_INSTALL_DIR="${OPENSHIFT_DATA_DIR}downloads/${LATEST}"
-  ln -s ${LATEST} ${OPENSHIFT_DATA_DIR}downloads/current
+
 
 else
   DRUPAL_INSTALL_DIR=$(readlink -f ${OPENSHIFT_DATA_DIR}downloads/current)
@@ -75,6 +73,6 @@ echo
 # Ensure that the app-root/runtime/repo/php PHP directory points
 # to a valid Drupal instance directory
 #
-ln -sfn ${DRUPAL_INSTALL_DIR} ${OPENSHIFT_REPO_DIR}public
+
 
 echo "done"
