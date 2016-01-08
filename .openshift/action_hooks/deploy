@@ -3,12 +3,3 @@
 # available.  Otherwise it will execute while your application is stopped
 # before the deploy step.  This script gets executed directly, so it
 # could be python, php, ruby, etc.
-
-set -e
-
-touch ${OPENSHIFT_REPO_DIR}public/info.php
-
-cat >${OPENSHIFT_REPO_DIR}public/info.php <<EOF
-<?php
-  phpinfo();
-EOF
