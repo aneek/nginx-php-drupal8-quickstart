@@ -59,11 +59,11 @@ if [ ! -d "${DRUPAL_DIRECTORY}" ] && [ ! -d "${DRUPAL_SITES_DIRECTORY}" ]; then
   mkdir -p ${OPENSHIFT_DATA_DIR}drupal/sites
   # Since the sites directory is created for the first time, copy all downloaded
   # site's items to this sites directory.
-  cp -r ${DRUPAL_DOWNLOADED_DIRECTORY}sites ${DRUPAL_SITES_DIRECTORY}
+  cp -r ${DRUPAL_DOWNLOADED_DIRECTORY}/sites ${DRUPAL_SITES_DIRECTORY}
   # Delete the actual downloaded sites directory and use a link to the data
   # directory. Some directories comes shipped like "default" directory.
-  rm -rf ${DRUPAL_DOWNLOADED_DIRECTORY}sites
-  ln -s ${DRUPAL_SITES_DIRECTORY} ${DRUPAL_DOWNLOADED_DIRECTORY}sites
+  rm -rf ${DRUPAL_DOWNLOADED_DIRECTORY}/sites
+  ln -s ${DRUPAL_SITES_DIRECTORY} ${DRUPAL_DOWNLOADED_DIRECTORY}/sites
   # Create "default/files" directory as we don't want Drupal to create those.
   mkdir -p ${OPENSHIFT_DATA_DIR}drupal/sites/default/files
   mkdir -p ${OPENSHIFT_DATA_DIR}drupal/sites/simpletest
