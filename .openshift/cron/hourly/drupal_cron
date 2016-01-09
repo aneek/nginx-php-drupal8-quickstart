@@ -1,2 +1,12 @@
-cd ${OPENSHIFT_REPO_DIR}php
-${OPENSHIFT_DATA_DIR}bin/drush core-cron
+#!/bin/bash
+# Drupal CRON that runs each hour.
+
+if ! drush_loc="$(type -p "drush")" || [ -z "$drush_loc" ]; then
+  DRUSH=${OPENSHIFT_PHP_DIR}/composer/.composer/vendor/bin/drush
+else
+  DRUSH=$(drush)
+fi
+
+cd ${OPENSHIFT_REPO_DIR}public
+${DRUSH} core-cron
+
