@@ -8,8 +8,7 @@ set -e
 
 source $OPENSHIFT_CARTRIDGE_SDK_BASH
 
-DRUPAL_DIRECTORY=${OPENSHIFT_DATA_DIR}drupal
-DRUPAL_SITES_DIRECTORY=${DRUPAL_DIRECTORY}/sites
+DRUPAL_SITES_DIRECTORY=${OPENSHIFT_DATA_DIR}/sites
 
 # If settings.php & services.yml is already present then no need to execute.
 if [ ! -f "${DRUPAL_SITES_DIRECTORY}/default/settings.php" ] && [ "${DRUPAL_SITES_DIRECTORY}/default/services.yml" ]; then

@@ -51,12 +51,9 @@ fi
 # Link the sites directory with the downloaded sites directory.
 
 # Check the existence of Drupal's "sites" directory.
-DRUPAL_DIRECTORY=${OPENSHIFT_DATA_DIR}drupal
-DRUPAL_SITES_DIRECTORY=${DRUPAL_DIRECTORY}/sites
+DRUPAL_SITES_DIRECTORY=${OPENSHIFT_DATA_DIR}/sites
 
-if [ ! -d "${DRUPAL_DIRECTORY}" ] && [ ! -d "${DRUPAL_SITES_DIRECTORY}" ]; then
-  # Initially Create the Drupal sites directory.
-  mkdir -p ${OPENSHIFT_DATA_DIR}drupal/sites
+if [ ! -d "${DRUPAL_SITES_DIRECTORY}" ]; then
   # Since the sites directory is created for the first time, copy all downloaded
   # site's items to this sites directory.
   cp -r ${DRUPAL_DOWNLOADED_DIRECTORY}/sites ${DRUPAL_SITES_DIRECTORY}
