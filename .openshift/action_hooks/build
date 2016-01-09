@@ -6,9 +6,44 @@
 
 set -e
 
-touch ${OPENSHIFT_REPO_DIR}public/info.php
+# Build PHP extra's
+# Update conf/ini filesand install pecl extensions
+${OPENSHIFT_PHP_DIR}/bin/control build
 
-cat >${OPENSHIFT_REPO_DIR}public/info.php <<EOF
-<?php
-  phpinfo();
-EOF
+# Check if Drush is installed or not.
+if ! drush_loc="$(type -p "drush")" || [ -z "$drush_loc" ]; then
+  echo "Drush is not installed. Installing Drush."
+  echo
+
+  # It is assumed that the Composer is already installed.
+  # Based on https://github.com/boekkooi/openshift-cartridge-php#composerpear
+  composer global require drush/drush
+  # Set Drush command.
+  DRUSH=${OPENSHIFT_PHP_DIR}/composer/.composer/vendor/bin/drush
+else
+  # Set the actual Drush command to the variable.
+  DRUSH=$(drush)
+fi
+
+# Drupal's site directory.
+DRUPAL_DIRECTORY=${OPENSHIFT_DATA_DIR}drupal
+DRUPAL_SITES_DIRECTORY=${DRUPAL_DIRECTORY}sites
+
+# Downloads Directory.
+DOWNLOAD_DIRECTORY=${OPENSHIFT_DATA_DIR}downloads
+
+# If there is no current download of Drupal, create one.
+
+if [ ! -d "${DOWNLOAD_DIRECTORY}" ]; then
+  # Create the current download.
+  mkdir -p ${DOWNLOAD_DIRECTORY}
+  if ! ${DRUSH} dl drupal-8 --destination=${DOWNLOAD_DIRECTORY} --yes --default-major=8
+  then
+    echo "ERROR: Unable download and install Drupal."
+    exit 7
+  fi
+  else
+    echo "Using the previous Drupal installation at "
+fi
+
+
