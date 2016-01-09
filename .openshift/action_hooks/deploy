@@ -4,23 +4,3 @@
 # before the deploy step.  This script gets executed directly, so it
 # could be python, php, ruby, etc.
 
-set -e
-
-source $OPENSHIFT_CARTRIDGE_SDK_BASH
-
-DRUPAL_SITES_DIRECTORY=${OPENSHIFT_DATA_DIR}/sites
-
-# If settings.php & services.yml is already present then no need to execute.
-if [ ! -f "${DRUPAL_SITES_DIRECTORY}/default/settings.php" ] && [ "${DRUPAL_SITES_DIRECTORY}/default/services.yml" ]; then
-  client_result "Settings permissions"
-  # Grant some permissions to the files and directories as per
-  # https://api.drupal.org/api/drupal/core%21INSTALL.txt/8
-  chmod a+w ${DRUPAL_SITES_DIRECTORY}/default
-  chmod a+w ${DRUPAL_SITES_DIRECTORY}/default/files
-  chmod a+w ${DRUPAL_SITES_DIRECTORY}/simpletest
-  # Create settings.php and services.yml file.
-  cp ${DRUPAL_SITES_DIRECTORY}/default/default.settings.php ${DRUPAL_SITES_DIRECTORY}/default/settings.php
-  cp ${DRUPAL_SITES_DIRECTORY}/default/default.services.yml ${DRUPAL_SITES_DIRECTORY}/default/services.yml
-  chmod a+w ${DRUPAL_SITES_DIRECTORY}/default/settings.php ${DRUPAL_SITES_DIRECTORY}/default/services.yml
-fi
-client_result ""

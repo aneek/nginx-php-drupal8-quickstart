@@ -51,26 +51,41 @@ fi
 # Link the sites directory with the downloaded sites directory.
 
 # Check the existence of Drupal's "sites" directory.
-DRUPAL_SITES_DIRECTORY=${OPENSHIFT_DATA_DIR}/sites
+DRUPAL_SITES_DIRECTORY=${OPENSHIFT_DATA_DIR}sites
 
 if [ ! -d "${DRUPAL_SITES_DIRECTORY}" ]; then
   # Since the sites directory is created for the first time, copy all downloaded
   # site's items to this sites directory.
   cp -r ${DRUPAL_DOWNLOADED_DIRECTORY}/sites ${DRUPAL_SITES_DIRECTORY}
   # Create "default/files" directory as we don't want Drupal to create those.
-  mkdir -p ${OPENSHIFT_DATA_DIR}drupal/sites/default/files
-  mkdir -p ${OPENSHIFT_DATA_DIR}drupal/sites/simpletest
+  mkdir -p ${DRUPAL_SITES_DIRECTORY}/default/files
+  mkdir -p ${DRUPAL_SITES_DIRECTORY}/simpletest
   # Delete the actual downloaded sites directory and use a link to the data
   # directory. Some directories comes shipped like "default" directory.
   rm -rf ${DRUPAL_DOWNLOADED_DIRECTORY}/sites
   ln -s ${DRUPAL_SITES_DIRECTORY} ${DRUPAL_DOWNLOADED_DIRECTORY}/sites
 else
   # No need to perform sites directory creation steps since it's existing.
+  rm -rf ${DRUPAL_DOWNLOADED_DIRECTORY}/sites
   ln -s ${DRUPAL_SITES_DIRECTORY} ${DRUPAL_DOWNLOADED_DIRECTORY}/sites
   client_result "Using the previous Drupal sites directory from $DRUPAL_SITES_DIRECTORY"
   client_result ""
 fi
 
+# If settings.php & services.yml is already present then no need to execute.
+if [ ! -f "${DRUPAL_SITES_DIRECTORY}/default/settings.php" ] && [ "${DRUPAL_SITES_DIRECTORY}/default/services.yml" ]; then
+  client_result "Settings permissions"
+  # Grant some permissions to the files and directories as per
+  # https://api.drupal.org/api/drupal/core%21INSTALL.txt/8
+  chmod a+w ${DRUPAL_SITES_DIRECTORY}/default
+  chmod a+w ${DRUPAL_SITES_DIRECTORY}/default/files
+  chmod a+w ${DRUPAL_SITES_DIRECTORY}/simpletest
+  # Create settings.php and services.yml file.
+  cp ${DRUPAL_SITES_DIRECTORY}/default/default.settings.php ${DRUPAL_SITES_DIRECTORY}/default/settings.php
+  cp ${DRUPAL_SITES_DIRECTORY}/default/default.services.yml ${DRUPAL_SITES_DIRECTORY}/default/services.yml
+  chmod a+w ${DRUPAL_SITES_DIRECTORY}/default/settings.php ${DRUPAL_SITES_DIRECTORY}/default/services.yml
+fi
+client_result ""
 
 # Link each directory and file present in Repository's document root.
 # Currently the repository drupal directory should have modules, profiles and
