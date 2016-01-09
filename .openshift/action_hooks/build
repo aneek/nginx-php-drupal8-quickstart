@@ -6,14 +6,16 @@
 
 set -e
 
+source $OPENSHIFT_CARTRIDGE_SDK_BASH
+
 # Build PHP extra's
 # Update conf/ini filesand install pecl extensions
 ${OPENSHIFT_PHP_DIR}/bin/control build
 
 # Check if Drush is installed or not.
 if ! drush_loc="$(type -p "drush")" || [ -z "$drush_loc" ]; then
-  echo "Drush is not installed. Installing Drush."
-  echo
+  client_result "Drush is not installed. Installing Drush."
+  client_result ""
 
   # It is assumed that the Composer is already installed.
   # Based on https://github.com/boekkooi/openshift-cartridge-php#composerpear
@@ -25,12 +27,8 @@ else
   DRUSH=$(drush)
 fi
 
-# Drupal's site directory.
-DRUPAL_DIRECTORY=${OPENSHIFT_DATA_DIR}drupal
-DRUPAL_SITES_DIRECTORY=${DRUPAL_DIRECTORY}sites
-
 # Downloads Directory.
-DOWNLOAD_DIRECTORY=${OPENSHIFT_DATA_DIR}downloads
+export DOWNLOAD_DIRECTORY=${OPENSHIFT_DATA_DIR}downloads
 
 # If there is no current download of Drupal, create one.
 
@@ -39,11 +37,85 @@ if [ ! -d "${DOWNLOAD_DIRECTORY}" ]; then
   mkdir -p ${DOWNLOAD_DIRECTORY}
   if ! ${DRUSH} dl drupal-8 --destination=${DOWNLOAD_DIRECTORY} --yes --default-major=8
   then
-    echo "ERROR: Unable download and install Drupal."
+    client_error "ERROR: Unable download Drupal 8."
     exit 7
   fi
+  export DRUPAL_DOWNLOADED_DIRECTORY="${DOWNLOAD_DIRECTORY}/`ls -1rt ${DOWNLOAD_DIRECTORY} | head -1`"
+  ln -s ${DRUPAL_DOWNLOADED_DIRECTORY} ${DOWNLOAD_DIRECTORY}/current
   else
-    echo "Using the previous Drupal installation at "
+    DRUPAL_DOWNLOADED_DIRECTORY=`readlink -f ${DOWNLOAD_DIRECTORY}/current`
+    client_result "Using the previous Drupal download from $DRUPAL_DOWNLOADED_DIRECTORY"
+    client_result ""
 fi
 
+# Link the sites directory with the downloaded sites directory.
+
+# Check the existence of Drupal's "sites" directory.
+DRUPAL_DIRECTORY=${OPENSHIFT_DATA_DIR}drupal
+DRUPAL_SITES_DIRECTORY=${DRUPAL_DIRECTORY}/sites
+
+if [ ! -d "${DRUPAL_DIRECTORY}" ] && [ ! -d "${DRUPAL_SITES_DIRECTORY}" ]; then
+  # Initially Create the Drupal sites directory.
+  mkdir -p ${OPENSHIFT_DATA_DIR}drupal/sites
+  # Since the sites directory is created for the first time, copy all downloaded
+  # site's items to this sites directory.
+  cp -r ${DRUPAL_DOWNLOADED_DIRECTORY}sites ${DRUPAL_SITES_DIRECTORY}
+  # Delete the actual downloaded sites directory and use a link to the data
+  # directory. Some directories comes shipped like "default" directory.
+  rm -rf ${DRUPAL_DOWNLOADED_DIRECTORY}sites
+  ln -s ${DRUPAL_SITES_DIRECTORY} ${DRUPAL_DOWNLOADED_DIRECTORY}sites
+  # Create "default/files" directory as we don't want Drupal to create those.
+  mkdir -p ${OPENSHIFT_DATA_DIR}drupal/sites/default/files
+  mkdir -p ${OPENSHIFT_DATA_DIR}drupal/sites/simpletest
+else
+  # No need to perform sites directory creation steps since it's existing.
+  client_result "Using the previous Drupal sites directory from $DRUPAL_SITES_DIRECTORY"
+  client_result ""
+fi
+
+
+# Link each directory and file present in Repository's document root.
+# Currently the repository drupal directory should have modules, profiles and
+# themes directory.
+# Also changeable files like ".htaccess" or ".gitignore" can be placed.
+client_result "Creating symbolic links with the Drupal repository directory."
+client_result ""
+# Remove <drupal-root>/modules directory in favor of the repository's directory.
+rm -rf ${DRUPAL_DOWNLOADED_DIRECTORY}/modules
+ln -s ${OPENSHIFT_REPO_DIR}drupal/modules ${DRUPAL_DOWNLOADED_DIRECTORY}/modules
+# Remove <drupal-root>/themes directory in favor of the repository's directory.
+rm -rf ${DRUPAL_DOWNLOADED_DIRECTORY}/themes
+ln -s ${OPENSHIFT_REPO_DIR}drupal/themes ${DRUPAL_DOWNLOADED_DIRECTORY}/themes
+# Remove <drupal-root>/profiles directory in favor of the repository's directory.
+rm -rf ${DRUPAL_DOWNLOADED_DIRECTORY}/profiles
+ln -s ${OPENSHIFT_REPO_DIR}drupal/profiles ${DRUPAL_DOWNLOADED_DIRECTORY}/profiles
+
+# For any other files present in the repository's directory link those too.
+DRUPAL_REPO=${OPENSHIFT_REPO_DIR}drupal
+FILES=`find ${DRUPAL_REPO} -maxdepth 1 -type f`;
+if [ ! -z "${FILES}" ]; then
+  for file in ${FILES} ; do
+    FILENAME=$(basename $file);
+    # Get only the file name and delete the same from downloaded directory then
+    # link with repository's drupal root directory file.
+    if [ -f "${DRUPAL_DOWNLOADED_DIRECTORY}/${FILENAME}" ]; then
+      # Delete the file.
+      rm -rf ${DRUPAL_DOWNLOADED_DIRECTORY}/${FILENAME}
+      # Link the file.
+      ln -s ${file} ${DRUPAL_DOWNLOADED_DIRECTORY}/${FILENAME}
+    else
+      # Link the file.
+      ln -s ${file} ${DRUPAL_DOWNLOADED_DIRECTORY}/${FILENAME}
+    fi
+  done
+fi
+client_result "Symbolic links creation done."
+client_result ""
+
+# At the end link the Drupal downloaded directory to the public directory.
+rm -rf ${OPENSHIFT_REPO_DIR}public
+ln -s ${DRUPAL_DOWNLOADED_DIRECTORY} ${OPENSHIFT_REPO_DIR}public
+
+client_result "Build Complete. Proceed to next steps."
+client_result ""
 
