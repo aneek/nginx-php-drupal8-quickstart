@@ -131,4 +131,3 @@ ln -s ${DRUPAL_DOWNLOADED_DIRECTORY} ${OPENSHIFT_REPO_DIR}public
 
 client_result "Build Complete. Proceed to next steps."
 client_result ""
-
