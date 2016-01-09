@@ -1833,6 +1833,7 @@ ldap.max_links = -1
 
 [opcache]
 ; Determines if Zend OPCache is enabled
+zend_extension="<%= ENV['OPENSHIFT_PHP_DIR'] %>ext/opcache.so"
 opcache.enable=1
 
 ; Determines if Zend OPCache is enabled for the CLI version of PHP
@@ -1933,7 +1934,7 @@ opcache.fast_shutdown=1
 ;curl.cainfo =
 
 [Upload Progress]
-extension=uploadprogress.so
+extension = "<%= ENV['OPENSHIFT_PHP_DIR'] %>ext/uploadprogress.so"
 
 ; Local Variables:
 ; tab-width: 4
