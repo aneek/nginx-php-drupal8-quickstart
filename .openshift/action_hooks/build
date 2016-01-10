@@ -6,16 +6,14 @@
 
 set -e
 
-source $OPENSHIFT_CARTRIDGE_SDK_BASH
-
 # Build PHP extra's
 # Update conf/ini filesand install pecl extensions
 ${OPENSHIFT_PHP_DIR}/bin/control build
 
 # Check if Drush is installed or not.
 if ! drush_loc="$(type -p "drush")" || [ -z "$drush_loc" ]; then
-  client_result "Drush is not installed. Installing Drush."
-  client_result ""
+  echo "Drush is not installed. Installing Drush."
+  echo
 
   # It is assumed that the Composer is already installed.
   # Based on https://github.com/boekkooi/openshift-cartridge-php#composerpear
@@ -37,7 +35,7 @@ if [ ! -d "${DOWNLOAD_DIRECTORY}/current" ]; then
   mkdir -p ${DOWNLOAD_DIRECTORY}
   if ! ${DRUSH} dl drupal-8 --destination=${DOWNLOAD_DIRECTORY} --yes --default-major=8
   then
-    client_error "ERROR: Unable download Drupal 8."
+    echo "ERROR: Unable download Drupal 8."
     exit 7
   fi
   rm -f ${DOWNLOAD_DIRECTORY}/current
@@ -45,8 +43,8 @@ if [ ! -d "${DOWNLOAD_DIRECTORY}/current" ]; then
   ln -s ${DRUPAL_DOWNLOADED_DIRECTORY} ${DOWNLOAD_DIRECTORY}/current
   else
     DRUPAL_DOWNLOADED_DIRECTORY=`readlink -f ${DOWNLOAD_DIRECTORY}/current`
-    client_result "Using the previous Drupal download from $DRUPAL_DOWNLOADED_DIRECTORY"
-    client_result ""
+    echo "Using the previous Drupal download from $DRUPAL_DOWNLOADED_DIRECTORY"
+    echo
 fi
 
 # Link the sites directory with the downloaded sites directory.
@@ -69,13 +67,13 @@ else
   # No need to perform sites directory creation steps since it's existing.
   rm -rf ${DRUPAL_DOWNLOADED_DIRECTORY}/sites
   ln -s ${DRUPAL_SITES_DIRECTORY} ${DRUPAL_DOWNLOADED_DIRECTORY}/sites
-  client_result "Using the previous Drupal sites directory from $DRUPAL_SITES_DIRECTORY"
-  client_result ""
+  echo "Using the previous Drupal sites directory from $DRUPAL_SITES_DIRECTORY"
+  echo
 fi
 
 # If settings.php & services.yml is already present then no need to execute.
 if [ ! -f "${DRUPAL_SITES_DIRECTORY}/default/settings.php" ] && [ "${DRUPAL_SITES_DIRECTORY}/default/services.yml" ]; then
-  client_result "Settings permissions"
+  echo "Settings permissions"
   # Grant some permissions to the files and directories as per
   # https://api.drupal.org/api/drupal/core%21INSTALL.txt/8
   chmod a+w ${DRUPAL_SITES_DIRECTORY}/default
@@ -86,14 +84,14 @@ if [ ! -f "${DRUPAL_SITES_DIRECTORY}/default/settings.php" ] && [ "${DRUPAL_SITE
   cp ${DRUPAL_SITES_DIRECTORY}/default/default.services.yml ${DRUPAL_SITES_DIRECTORY}/default/services.yml
   chmod a+w ${DRUPAL_SITES_DIRECTORY}/default/settings.php ${DRUPAL_SITES_DIRECTORY}/default/services.yml
 fi
-client_result ""
+echo
 
 # Link each directory and file present in Repository's document root.
 # Currently the repository drupal directory should have modules, profiles and
 # themes directory.
 # Also changeable files like ".htaccess" or ".gitignore" can be placed.
-client_result "Creating symbolic links with the Drupal repository directory."
-client_result ""
+echo "Creating symbolic links with the Drupal repository directory."
+echo
 # Remove <drupal-root>/modules directory in favor of the repository's directory.
 rm -rf ${DRUPAL_DOWNLOADED_DIRECTORY}/modules
 ln -s ${OPENSHIFT_REPO_DIR}drupal/modules ${DRUPAL_DOWNLOADED_DIRECTORY}/modules
@@ -123,12 +121,11 @@ if [ ! -z "${FILES}" ]; then
     fi
   done
 fi
-client_result "Symbolic links creation done."
-client_result ""
+echo "Symbolic links creation done."
+echo
 
 # At the end link the Drupal downloaded directory to the public directory.
+echo "Link Drupal directory"
 rm -rf ${OPENSHIFT_REPO_DIR}public
 ln -s ${DRUPAL_DOWNLOADED_DIRECTORY} ${OPENSHIFT_REPO_DIR}public
-
-client_result "Build Complete. Proceed to next steps."
-client_result ""
+echo
