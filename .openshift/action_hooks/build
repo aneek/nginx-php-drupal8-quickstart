@@ -32,7 +32,7 @@ export DOWNLOAD_DIRECTORY=${OPENSHIFT_DATA_DIR}downloads
 
 # If there is no current download of Drupal, create one.
 
-if [ ! -d "${DOWNLOAD_DIRECTORY}" ]; then
+if [ ! -d "${DOWNLOAD_DIRECTORY}/current" ]; then
   # Create the current download.
   mkdir -p ${DOWNLOAD_DIRECTORY}
   if ! ${DRUSH} dl drupal-8 --destination=${DOWNLOAD_DIRECTORY} --yes --default-major=8
@@ -40,6 +40,7 @@ if [ ! -d "${DOWNLOAD_DIRECTORY}" ]; then
     client_error "ERROR: Unable download Drupal 8."
     exit 7
   fi
+  rm -f ${DOWNLOAD_DIRECTORY}/current
   export DRUPAL_DOWNLOADED_DIRECTORY="${DOWNLOAD_DIRECTORY}/`ls -1rt ${DOWNLOAD_DIRECTORY} | head -1`"
   ln -s ${DRUPAL_DOWNLOADED_DIRECTORY} ${DOWNLOAD_DIRECTORY}/current
   else
