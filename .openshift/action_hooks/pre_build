@@ -4,4 +4,14 @@
 # before the build step.  This script gets executed directly, so it
 # could be python, php, ruby, etc.
 
-echo "Drupal application credentials\n\tuser: admin\n\tpassword: openshift_changeme\n" > ${OPENSHIFT_DATA_DIR}/CREDENTIALS
+set -e
+
+# Install the twig extension if not present.
+if [ ! -f "${OPENSHIFT_PHP_DIR}/ext/twig.so" ]; then
+  echo "Twig extension doesn't exist. Installing the extension"
+  echo
+  pushd ${OPENSHIFT_TMP_DIR}
+  git clone git clone https://github.com/fabpot/Twig.git
+  pushd ${OPENSHIFT_TMP_DIR}/Twig/ext/twig/
+  phpize && ./configure && make && make test && make install && popd && popd && rm -rf ${OPENSHIFT_TMP_DIR}/Twig
+fi
