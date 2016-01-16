@@ -77,9 +77,13 @@ END
   cat ${OPENSHIFT_TMP_DIR}/settings.php > ${DRUPAL_SETTINGS_FILE}
 
   # Install the site via Drush.
+  pushd ${OPENSHIFT_REPO_DIR}public
   echo "Install site via Drush."
   echo
   $DRUSH site-install ${profile} --site-name=${sitename} --account-name=${accountname} --account-pass=${accountpass} --account-mail=${accountmail} --db-url=mysql://$OPENSHIFT_MYSQL_DB_USERNAME:$OPENSHIFT_MYSQL_DB_PASSWORD@$OPENSHIFT_MYSQL_DB_HOST:$OPENSHIFT_MYSQL_DB_PORT/$OPENSHIFT_APP_NAME --yes &
+  echo "Installation done."
+  echo
+  popd
   echo "Securing file permissions."
   echo
   chmod u-w ${DRUPAL_SETTINGS_FILE} ${DRUPAL_SRVICES_FILE} ${DRUPAL_SITES_DIRECTORY}/default
