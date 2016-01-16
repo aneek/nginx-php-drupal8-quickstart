@@ -40,42 +40,6 @@ if [ ! -f "${DRUPAL_SITES_DIRECTORY}/default/settings.php" ] && [ "${DRUPAL_SITE
   DRUPAL_SETTINGS_FILE=${DRUPAL_SITES_DIRECTORY}/default/settings.php
   DRUPAL_SRVICES_FILE=${DRUPAL_SITES_DIRECTORY}/default/services.yml
 
-  cat ${DRUPAL_SETTINGS_FILE} | ruby -e "puts STDIN.read.gsub(/\\\$databases\s*=\s*array.*?\)\;/m, '# Replaced by OpenShift')" > ${OPENSHIFT_TMP_DIR}/settings.php
-  cat << "END" >> ${OPENSHIFT_TMP_DIR}/settings.php
-
-/**
- * For maximum portability, use the OpenShift environment variables.
- */
-
-// When run from Drush, only $_ENV is available.  Might be a bug
-if (array_key_exists('OPENSHIFT_APP_NAME', $_SERVER)) {
-  $src = $_SERVER;
-} else {
-  $src = $_ENV;
-}
-// Add default database configuration.
-$databases['default']['default'] = array (
-  'database' => $src['OPENSHIFT_APP_NAME'],
-  'username' => $src['OPENSHIFT_MYSQL_DB_USERNAME'],
-  'password' => $src['OPENSHIFT_MYSQL_DB_PASSWORD'],
-  'prefix' => '',
-  'host' => $src['OPENSHIFT_MYSQL_DB_HOST'],
-  'port' => $src['OPENSHIFT_MYSQL_DB_PORT'],
-  'namespace' => 'Drupal\\Core\\Database\\Driver\\mysql',
-  'driver' => 'mysql',
-);
-
-// Add Trusted host patterns.
-$hosts = array(
-  '^localhost$',
-  '^.+\.rhcloud\.com$',
-  '^' . str_replace(".", "\\.", $src['OPENSHIFT_APP_DNS']) . '$',
-);
-$settings['trusted_host_patterns'] = $hosts;
-
-END
-  cat ${OPENSHIFT_TMP_DIR}/settings.php > ${DRUPAL_SETTINGS_FILE}
-
   # Install the site via Drush.
   pushd ${OPENSHIFT_REPO_DIR}public
   echo "Install site via Drush."
