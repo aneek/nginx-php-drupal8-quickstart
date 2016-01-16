@@ -4,3 +4,88 @@
 # before the deploy step.  This script gets executed directly, so it
 # could be python, php, ruby, etc.
 
+set -e
+
+source $OPENSHIFT_CARTRIDGE_SDK_BASH
+source ${OPENSHIFT_REPO_DIR}.openshift/lib/yaml_parser.sh
+
+# Automate a Drupal installation based on the given profile information.
+# The information placed in <OPENSHIFT_REPO_DIR>/.openshift/deploy.config.yml.
+DEPLOY_CONFIG=${OPENSHIFT_REPO_DIR}.openshift/deploy.config.yml
+eval "$(parse_yaml ${DEPLOY_CONFIG})"
+
+# Drupal's sites directory path.
+DRUPAL_SITES_DIRECTORY=${OPENSHIFT_DATA_DIR}sites
+
+# Check if Drush is installed or not.
+if ! drush_loc="$(type -p "drush")" || [ -z "$drush_loc" ]; then
+  DRUSH=${OPENSHIFT_PHP_DIR}/composer/.composer/vendor/bin/drush
+else
+  DRUSH=$(drush)
+fi
+
+# If settings.php & services.yml is already present then no need to execute.
+if [ ! -f "${DRUPAL_SITES_DIRECTORY}/default/settings.php" ] && [ "${DRUPAL_SITES_DIRECTORY}/default/services.yml" ]; then
+  echo "Settings permissions"
+  # Grant some permissions to the files and directories as per
+  # https://api.drupal.org/api/drupal/core%21INSTALL.txt/8
+  chmod u+w ${DRUPAL_SITES_DIRECTORY}/default
+  chmod u+w ${DRUPAL_SITES_DIRECTORY}/default/files
+  chmod u+w ${DRUPAL_SITES_DIRECTORY}/simpletest
+  # Create settings.php and services.yml file.
+  cp ${DRUPAL_SITES_DIRECTORY}/default/default.settings.php ${DRUPAL_SITES_DIRECTORY}/default/settings.php
+  cp ${DRUPAL_SITES_DIRECTORY}/default/default.services.yml ${DRUPAL_SITES_DIRECTORY}/default/services.yml
+  chmod u+w ${DRUPAL_SITES_DIRECTORY}/default/settings.php ${DRUPAL_SITES_DIRECTORY}/default/services.yml
+
+  DRUPAL_SETTINGS_FILE=${DRUPAL_SITES_DIRECTORY}/default/settings.php
+  DRUPAL_SRVICES_FILE=${DRUPAL_SITES_DIRECTORY}/default/services.yml
+
+  cat ${DRUPAL_SETTINGS_FILE} | ruby -e "puts STDIN.read.gsub(/\\\$databases\s*=\s*array.*?\)\;/m, '# Replaced by OpenShift')" > ${OPENSHIFT_TMP_DIR}/settings.php
+  cat << "END" >> ${OPENSHIFT_TMP_DIR}/settings.php
+
+/**
+ * For maximum portability, use the OpenShift environment variables.
+ */
+
+// When run from Drush, only $_ENV is available.  Might be a bug
+if (array_key_exists('OPENSHIFT_APP_NAME', $_SERVER)) {
+  $src = $_SERVER;
+} else {
+  $src = $_ENV;
+}
+// Add default database configuration.
+$databases['default']['default'] = array (
+  'database' => $src['OPENSHIFT_APP_NAME'],
+  'username' => $src['OPENSHIFT_MYSQL_DB_USERNAME'],
+  'password' => $src['OPENSHIFT_MYSQL_DB_PASSWORD'],
+  'prefix' => '',
+  'host' => $src['OPENSHIFT_MYSQL_DB_HOST'],
+  'port' => $src['OPENSHIFT_MYSQL_DB_PORT'],
+  'namespace' => 'Drupal\\Core\\Database\\Driver\\mysql',
+  'driver' => 'mysql',
+);
+
+// Add Trusted host patterns.
+$hosts = array(
+  '^localhost$',
+  '^.+\.rhcloud\.com$',
+  '^' . str_replace(".", "\\.", $src['OPENSHIFT_APP_DNS']) . '$',
+);
+$settings['trusted_host_patterns'] = $hosts;
+
+END
+  cat ${OPENSHIFT_TMP_DIR}/settings.php > ${DRUPAL_SETTINGS_FILE}
+
+  # Install the site via Drush.
+  echo "Install site via Drush."
+  echo
+  $DRUSH site-install ${profile} --site-name=${sitename} --account-name=${accountname} --account-pass=${accountpass} --account-mail=${accountmail} --db-url=mysql://$OPENSHIFT_MYSQL_DB_USERNAME:$OPENSHIFT_MYSQL_DB_PASSWORD@$OPENSHIFT_MYSQL_DB_HOST:$OPENSHIFT_MYSQL_DB_PORT/$OPENSHIFT_APP_NAME --yes &
+  echo "Securing file permissions."
+  echo
+  chmod u-w ${DRUPAL_SETTINGS_FILE} ${DRUPAL_SRVICES_FILE} ${DRUPAL_SITES_DIRECTORY}/default
+  echo "Deployment process done."
+  echo
+else
+  echo "Drupal is already configured."
+fi
+echo

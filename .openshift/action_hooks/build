@@ -6,6 +6,12 @@
 
 set -e
 
+# First check for MySQL availability.
+if [ -z "$OPENSHIFT_MYSQL_DB_HOST" ] && [ -z "$OPENSHIFT_MYSQL_DB_PORT" ]; then
+  echo "MySQL is not present. Please start over after adding a MySQL cartridge".
+  exit 7
+fi
+
 # Build PHP extra's
 # Update conf/ini filesand install pecl extensions
 ${OPENSHIFT_PHP_DIR}/bin/control build
@@ -70,21 +76,6 @@ else
   echo "Using the previous Drupal sites directory from $DRUPAL_SITES_DIRECTORY"
   echo
 fi
-
-# If settings.php & services.yml is already present then no need to execute.
-if [ ! -f "${DRUPAL_SITES_DIRECTORY}/default/settings.php" ] && [ "${DRUPAL_SITES_DIRECTORY}/default/services.yml" ]; then
-  echo "Settings permissions"
-  # Grant some permissions to the files and directories as per
-  # https://api.drupal.org/api/drupal/core%21INSTALL.txt/8
-  chmod a+w ${DRUPAL_SITES_DIRECTORY}/default
-  chmod a+w ${DRUPAL_SITES_DIRECTORY}/default/files
-  chmod a+w ${DRUPAL_SITES_DIRECTORY}/simpletest
-  # Create settings.php and services.yml file.
-  cp ${DRUPAL_SITES_DIRECTORY}/default/default.settings.php ${DRUPAL_SITES_DIRECTORY}/default/settings.php
-  cp ${DRUPAL_SITES_DIRECTORY}/default/default.services.yml ${DRUPAL_SITES_DIRECTORY}/default/services.yml
-  chmod a+w ${DRUPAL_SITES_DIRECTORY}/default/settings.php ${DRUPAL_SITES_DIRECTORY}/default/services.yml
-fi
-echo
 
 # Link each directory and file present in Repository's document root.
 # Currently the repository drupal directory should have modules, profiles and

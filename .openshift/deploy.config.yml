@@ -1,0 +1,13 @@
+# Deployment configuration file.
+
+# The installer profile name. Change this if you want to install a different
+# Drupal profile.
+profile: standard
+# The name of the site.
+sitename: drupal8
+# The super user account's name. Change this before the build.
+accountname: admin
+# The supper user's account password. Change this before the build.
+accountpass: password
+# The super user's email address. Change this before the build.
+accountmail: admin@localhost.com
